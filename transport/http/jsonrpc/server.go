@@ -7,6 +7,10 @@ import (
 	"io"
 	"net/http"
 
+	"unicode"
+
+	"unicode/utf8"
+
 	"github.com/go-kit/kit/log"
 	httptransport "github.com/go-kit/kit/transport/http"
 )
@@ -203,4 +207,19 @@ type interceptingWriter struct {
 func (w *interceptingWriter) WriteHeader(code int) {
 	w.code = code
 	w.ResponseWriter.WriteHeader(code)
+}
+
+func isJSONArray(d []byte) bool {
+	n := len(d)
+	for i, offset, r, n := 0, 0, rune(0), n; i < n; i += offset {
+		r, offset = utf8.DecodeRune(d[i:])
+		if unicode.IsSpace(r) {
+			continue
+		}
+		if r != '[' {
+			return false
+		}
+		return true
+	}
+	return false // only space symbols
 }
